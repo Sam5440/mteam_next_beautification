@@ -1,23 +1,15 @@
 // ==UserScript==
 // @name         M-Team 封面增強PRO (網格佈局、點擊放大、高級自定義)
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  將M-Team種子列表轉換為高度自定義的卡片式網格佈局。功能包括：點擊封面放大、收藏/下載按鈕即時同步、按鈕佈局及大小調整、獨立字體及顏色控制、大種子高亮、靈活的內容寬度調節、數據靠右顯示、時間換行與前綴、精確時間計算、多語言、下載新分頁、刷新延遲自定義等，所有設置均可通過統一面板持久化保存。
-// @author       ChatGPT & You
-// @match        *://*/browse*
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_deleteValue
-// @grant        GM_xmlhttpRequest
-// @connect      raw.githubusercontent.com
-// @license      MIT
+// @version      1.1
+// @description  將M-Team種子列表轉換為高度自定義的卡片式網格佈局。功能包括：點擊封面放大、收藏/下載按鈕即時同步、按鈕佈局及大小調整、獨立字體及顏色控制、大種子高亮、靈活的內容寬度調節、數據靠右顯示、時間換行與前綴、精確時間計算、多語言、下載新分頁、刷新延遲自定義等，所有設置均可通過統一面板持久化保存。此版本新增“Free”種子卡片綠色高亮功能。
 // ==/UserScript==
 
 (function() {
     'use strict';
 
     // --- 版本控制 ---
-    const SCRIPT_VERSION = '1.0';
+    const SCRIPT_VERSION = '1.1'; // 更新版本號
     let latestVersion = '檢查中...';
 
     // --- 配置和存儲鍵 ---
@@ -121,7 +113,7 @@
             'layoutMaxWidth': '最大寬度',
             'layoutFixedWidth': '固定寬度',
             'contentMargin': '向右移動距離:',
-            'layoutWarning': '提示：若種子排版異常或未佔滿空間，請調整此處的佈局與寬度值。',
+            'layoutWarning': '提示：若種子排版異常或未佔滿空間，請調整此處的佈局與寬度值。例如向右移动距离在固定宽度的模式下一般为-300px,注意负号和px单位都是必需的',
             'refreshDelay': '刷新延遲:',
             'downloadSettings': '下載設置:',
             'downloadInNewTab': '攔截API並在新分頁下載',
@@ -164,7 +156,7 @@
             'layoutMaxWidth': '最大宽度',
             'layoutFixedWidth': '固定宽度',
             'contentMargin': '向右移动距离:',
-            'layoutWarning': '提示：若种子排版异常或未占满空间，请调整此处的布局与宽度值。',
+            'layoutWarning': '提示：若种子排版异常或未占满空间，请调整此处的布局与宽度值。例如向右移动距离在固定宽度的模式下一般为-300px,注意负号和px单位都是必需的',
             'refreshDelay': '刷新延迟:',
             'downloadSettings': '下载设置:',
             'downloadInNewTab': '拦截API并在新分页下载',
@@ -354,9 +346,43 @@
         const originalStarButton = actionsCell?.querySelector('button:has([aria-label="star"])');
         const originalDownloadButton = actionsCell?.querySelector('button:has(svg path[d*="M8 11.575C7.86667 11.575 7.74167 11.554 7.625 11.512C7.50833 11.4707 7.4 11.4 7.3 11.3L3.7 7.7C3.51667 7.51667 3.425 7.28333 3.425 7C3.425 6.71667 3.51667 6.48333 3.7 6.3C3.88333 6.11667 4.12067 6.02067 4.412 6.012C4.704 6.004 4.94167 6.09167 5.125 6.275L7 8.15V1C7 0.716667 7.096 0.479 7.288 0.287C7.47933 0.0956668 7.71667 0 8 0C8.28333 0 8.521 0.0956668 8.713 0.287C8.90433 0.479 9 0.716667 9 1V8.15L10.875 6.275C11.0583 6.09167 11.296 6.004 11.588 6.012C11.8793 6.02067 12.1167 6.11667 12.3 6.3C12.4833 6.48333 12.575 6.71667 12.575 7C12.575 7.28333 12.4833 7.51667 12.3 7.7L8.7 11.3C8.6 11.4 8.49167 11.4707 8.375 11.512C8.25833 11.554 8.13333 11.575 8 11.575ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196 15.021 0 14.55 0 14V12C0 11.7167 0.0956668 11.479 0.287 11.287C0.479 11.0957 0.716667 11 1 11C1.28333 11 1.521 11.0957 1.713 11.287C1.90433 11.479 2 11.7167 2 12V14H14V12C14 11.7167 14.096 11.479 14.288 11.287C14.4793 11.0957 14.7167 11 15 11C15.2833 11 15.5207 11.0957 15.712 11.287C15.904 11.479 16 11.7167 16 12V14C16 14.55 15.8043 15.021 15.413 15.413C15.021 15.8043 14.55 16 14 16H2Z"])');
 
+        // --- 新增：檢測Free標籤 ---
+        let isFreeTorrent = false;
+        const freeKeywords = ['free', '免費']; // 可以添加更多關鍵字
+        for (const tag of otherTags) {
+            const tagText = tag.textContent.toLowerCase();
+            if (freeKeywords.some(keyword => tagText.includes(keyword))) {
+                isFreeTorrent = true;
+                break;
+            }
+        }
+        // --- End 新增 ---
+
         const card = document.createElement('div');
         card.className = 'tm-torrent-card';
-        card.style.cssText = `display: flex; flex-direction: column; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.09); border: 1px solid #f0f0f0; transition: transform 0.2s ease, box-shadow 0.2s ease; height: 100%;`;
+
+        // --- 新增/修改：根據 isFreeTorrent 設定卡片樣式 ---
+        const defaultBorder = '#f0f0f0';
+        const defaultShadow = '0 2px 8px rgba(0,0,0,0.09)';
+        const defaultHoverShadow = '0 4px 12px rgba(0,0,0,0.12)';
+
+        const freeGreen = '#28a745'; // 鮮亮的綠色
+        const freeGreenBorder = `1px solid ${freeGreen}`;
+        const freeGreenShadow = `0 2px 8px rgba(40, 167, 69, 0.2)`; // 帶透明度的綠色陰影
+        const freeGreenHoverShadow = `0 4px 12px rgba(40, 167, 69, 0.3)`; // 懸停時更深的綠色陰影
+
+        card.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: ${isFreeTorrent ? freeGreenShadow : defaultShadow};
+            border: ${isFreeTorrent ? freeGreenBorder : `1px solid ${defaultBorder}`};
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; /* 添加 border-color 過渡 */
+            height: 100%;
+        `;
+
         const imageWrapper = document.createElement('div');
         const imageAspectRatio = parseFloat(CARD_ASPECT_RATIO.split('/')[0]) / parseFloat(CARD_ASPECT_RATIO.split('/')[1]);
         imageWrapper.style.cssText = `position: relative; width: 100%; padding-top: ${100 / imageAspectRatio}%; overflow: hidden; background-color: #f0f2f5; cursor: pointer;`;
@@ -365,13 +391,42 @@
             const newImg = imageEl.cloneNode(true);
             newImg.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.3s ease;`;
             imageWrapper.appendChild(newImg);
-            card.onmouseover = () => { newImg.style.transform = 'scale(1.05)'; card.style.transform = 'translateY(-5px)'; card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'; };
-            card.onmouseout = () => { newImg.style.transform = 'scale(1)'; card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.09)'; };
+            // 修改：懸停效果也根據 isFreeTorrent 調整
+            card.onmouseover = () => {
+                newImg.style.transform = 'scale(1.05)';
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = isFreeTorrent ? freeGreenHoverShadow : defaultHoverShadow;
+                // 非Free種子懸停時邊框顏色變深一點，Free種子保持綠色
+                if (!isFreeTorrent) {
+                    card.style.borderColor = '#d9d9d9';
+                }
+            };
+            card.onmouseout = () => {
+                newImg.style.transform = 'scale(1)';
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = isFreeTorrent ? freeGreenShadow : defaultShadow;
+                card.style.borderColor = isFreeTorrent ? freeGreen : defaultBorder;
+            };
             imageWrapper.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); createLightbox(newImg.src); });
         } else {
              imageWrapper.textContent = "無圖片";
              imageWrapper.style.cssText += 'display: flex; align-items: center; justify-content: center; color: #ccc;';
+             // 無圖片時的懸停效果
+             card.onmouseover = () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = isFreeTorrent ? freeGreenHoverShadow : defaultHoverShadow;
+                if (!isFreeTorrent) {
+                    card.style.borderColor = '#d9d9d9';
+                }
+            };
+            card.onmouseout = () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = isFreeTorrent ? freeGreenShadow : defaultShadow;
+                card.style.borderColor = isFreeTorrent ? freeGreen : defaultBorder;
+            };
         }
+        // --- End 修改 ---
+
         if (settings.tagPosition === 'cover' && otherTags.length > 0) {
             const tagsOverlay = document.createElement('div');
             tagsOverlay.style.cssText = `position: absolute; top: 8px; left: 8px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 1;`;
@@ -665,7 +720,7 @@
         settingsPanel.appendChild(createSettingRow(t('language'), langSelect));
 
         const layoutCheckbox = document.createElement('input'); layoutCheckbox.type = 'checkbox'; layoutCheckbox.checked = settings.cardLayout;
-        layoutCheckbox.addEventListener('change', e => { settings.cardLayout = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.cardLayout, settings.cardLayout); applyUserPreferences(); });
+        layoutCheckbox.addEventListener('change', e => { settings.cardLayout = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.cardLayout, e.target.checked); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('displayMode'), layoutCheckbox, document.createTextNode(` ${t('enableCardGrid')}`)));
 
         const scaleSelect = document.createElement('select'); scaleSelect.style.cssText = commonInputStyle;
@@ -687,26 +742,26 @@
         settingsPanel.appendChild(createSettingRow(t('timeGap'), ...createNumberInput('timeGapPx', 0, 20, 1, 'px')));
 
         const statsNewLineCheckbox = document.createElement('input'); statsNewLineCheckbox.type = 'checkbox'; statsNewLineCheckbox.checked = settings.showStatsOnNewLine;
-        statsNewLineCheckbox.addEventListener('change', e => { settings.showStatsOnNewLine = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.showStatsOnNewLine, settings.showStatsOnNewLine); applyUserPreferences(); });
+        statsNewLineCheckbox.addEventListener('change', e => { settings.showStatsOnNewLine = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.showStatsOnNewLine, e.target.checked); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('dataDisplay'), statsNewLineCheckbox, document.createTextNode(` ${t('statsOnNewLine')}`)));
 
         const statsPosSelect = document.createElement('select'); statsPosSelect.style.cssText = commonInputStyle;
         [{v: 'left', t: t('posLeft')}, {v: 'right', t: t('posRight')}].forEach(o => statsPosSelect.add(new Option(o.t, o.v))); statsPosSelect.value = settings.statsPosition;
-        statsPosSelect.addEventListener('change', e => { settings.statsPosition = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.statsPosition, settings.statsPosition); applyUserPreferences(); });
+        statsPosSelect.addEventListener('change', e => { settings.statsPosition = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.statsPosition, e.target.value); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('statsPosition'), statsPosSelect));
 
         const timeLayoutSelect = document.createElement('select'); timeLayoutSelect.style.cssText = commonInputStyle;
         [{v: 'inline', t: t('layoutInline')}, {v: 'newline', t: t('layoutNewline')}].forEach(o => timeLayoutSelect.add(new Option(o.t, o.v))); timeLayoutSelect.value = settings.timeLayout;
-        timeLayoutSelect.addEventListener('change', e => { settings.timeLayout = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.timeLayout, settings.timeLayout); applyUserPreferences(); });
+        timeLayoutSelect.addEventListener('change', e => { settings.timeLayout = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.timeLayout, e.target.value); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('timeLayout'), timeLayoutSelect));
 
         const prefixInput = document.createElement('input'); prefixInput.type = 'text'; prefixInput.value = settings.relativeTimePrefix;
         prefixInput.style.cssText = `${commonInputStyle} width: 100px;`;
-        prefixInput.addEventListener('input', e => { settings.relativeTimePrefix = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.relativeTimePrefix, settings.relativeTimePrefix); applyUserPreferences(); });
+        prefixInput.addEventListener('input', e => { settings.relativeTimePrefix = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.relativeTimePrefix, e.target.value); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('timePrefix'), prefixInput));
 
         const preciseTimeCheckbox = document.createElement('input'); preciseTimeCheckbox.type = 'checkbox'; preciseTimeCheckbox.checked = settings.usePreciseRelativeTime;
-        preciseTimeCheckbox.addEventListener('change', e => { settings.usePreciseRelativeTime = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.usePreciseRelativeTime, settings.usePreciseRelativeTime); applyUserPreferences(); });
+        preciseTimeCheckbox.addEventListener('change', e => { settings.usePreciseRelativeTime = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.usePreciseRelativeTime, e.target.checked); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('timeCalculation'), preciseTimeCheckbox, document.createTextNode(` ${t('preciseTime')}`)));
 
         const widthModeSelect = document.createElement('select'); widthModeSelect.style.cssText = commonInputStyle;
@@ -719,7 +774,7 @@
             marginLeftInput.value = settings.contentWidthMode === 'max-width' ? settings.contentMaxWidthMarginLeft : settings.contentFixedViewWidthMarginLeft;
         };
         updateContentLayoutInputs();
-        widthModeSelect.addEventListener('change', e => { settings.contentWidthMode = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.contentWidthMode, settings.contentWidthMode); updateContentLayoutInputs(); applyContentWidth(); });
+        widthModeSelect.addEventListener('change', e => { settings.contentWidthMode = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.contentWidthMode, e.target.value); updateContentLayoutInputs(); applyContentWidth(); });
         widthValueInput.addEventListener('input', () => { const key = settings.contentWidthMode === 'max-width' ? 'contentMaxWidthValue' : 'contentFixedViewWidthValue'; settings[key] = widthValueInput.value; GM_setValue(STORAGE_PREFIX + KEYS[key], widthValueInput.value); applyContentWidth(); });
         marginLeftInput.addEventListener('input', () => { const key = settings.contentWidthMode === 'max-width' ? 'contentMaxWidthMarginLeft' : 'contentFixedViewWidthMarginLeft'; settings[key] = marginLeftInput.value; GM_setValue(STORAGE_PREFIX + KEYS[key], marginLeftInput.value); applyContentWidth(); });
         settingsPanel.appendChild(createSettingRow(t('contentLayout'), widthModeSelect, widthValueInput));
@@ -731,11 +786,11 @@
         settingsPanel.appendChild(createSettingRow(t('refreshDelay'), ...createNumberInput('refreshDelay', 100, 2000, 50, 'ms')));
 
         const downloadCheckbox = document.createElement('input'); downloadCheckbox.type = 'checkbox'; downloadCheckbox.checked = settings.downloadInNewTab;
-        downloadCheckbox.addEventListener('change', e => { settings.downloadInNewTab = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.downloadInNewTab, settings.downloadInNewTab); applyUserPreferences(); });
+        downloadCheckbox.addEventListener('change', e => { settings.downloadInNewTab = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.downloadInNewTab, e.target.checked); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('downloadSettings'), downloadCheckbox, document.createTextNode(` ${t('downloadInNewTab')}`)));
 
         const counterCheckbox = document.createElement('input'); counterCheckbox.type = 'checkbox'; counterCheckbox.checked = settings.showCounter;
-        counterCheckbox.addEventListener('change', e => { settings.showCounter = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.showCounter, settings.showCounter); manageMainCounter(); });
+        counterCheckbox.addEventListener('change', e => { settings.showCounter = e.target.checked; GM_setValue(STORAGE_PREFIX + KEYS.showCounter, e.target.checked); manageMainCounter(); });
         settingsPanel.appendChild(createSettingRow(t('showCounter'), counterCheckbox, document.createTextNode(` ${t('enableCounter')}`)));
 
         const settingsCounterImg = document.createElement('img');
@@ -773,7 +828,7 @@
     function checkForUpdates() {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://raw.githubusercontent.com/Sam5440/mteam_next_beautification/refs/heads/main/version',
+            url: 'https://raw.githubusercontent.com/Sam5440/mteam_next_beautification/main/version', // 更新到正確的分支
             onload: function(response) {
                 if (response.status === 200) {
                     const fetchedVersion = response.responseText.trim();
@@ -821,17 +876,22 @@
         const table = document.querySelector('table.w-full.table-fixed');
         if (!table) return;
         const observerCallback = () => {
+            // Give some time for Ant Design to render the table fully
             setTimeout(applyUserPreferences, 150);
         };
         const observer = new MutationObserver(observerCallback);
+        // Observe changes to the tbody (where rows are added/removed)
         const targetNode = table.querySelector('tbody') || table;
         observer.observe(targetNode, { childList: true });
 
+        // Observe advanced search panel class changes for visibility
         const advancedSearchPanel = document.querySelector('form.torrent-search-panel + div');
         if(advancedSearchPanel) {
             const advancedObserver = new MutationObserver((mutations) => {
                 mutations.forEach(mutation => {
-                    if (mutation.attributeName === 'class') setTimeout(applyUserPreferences, 150);
+                    if (mutation.attributeName === 'class') {
+                        setTimeout(applyUserPreferences, 150);
+                    }
                 });
             });
             advancedObserver.observe(advancedSearchPanel, { attributes: true, attributeFilter: ['class'] });
@@ -840,20 +900,24 @@
 
     function addForcedRefreshListeners() {
         const forceRefresh = () => setTimeout(applyUserPreferences, settings.refreshDelay);
+        // Listen for clicks on common elements that trigger content changes
+        // Use a single delegated listener for efficiency
         document.body.addEventListener('click', (event) => {
+            // Check if the clicked element or its ancestors match our selectors
             if (event.target.closest('.ant-input-search-button, .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next, .ant-tag-checkable, .ant-select-item')) {
                 forceRefresh();
             }
-        }, true);
+        }, true); // Use capture phase to catch events before they are stopped by other scripts
     }
 
     function init() {
-        // Add animation style
+        // Add animation style for update indicator
         const styleSheet = document.createElement("style");
         styleSheet.type = "text/css";
         styleSheet.innerText = `@keyframes tm-blink { 50% { opacity: 0.5; } }`;
         document.head.appendChild(styleSheet);
 
+        // Check for first run or version update to trigger install counter
         const lastVersion = GM_getValue(STORAGE_PREFIX + KEYS.lastRunVersion, '0');
         if (lastVersion !== SCRIPT_VERSION) {
             new Image().src = 'https://profile-counter.glitch.me/Sam5440_mteam_plugin_install_v1/count.svg';
@@ -861,6 +925,7 @@
         }
 
         const checkReady = setInterval(() => {
+            // Wait for the torrent table to be populated
             if (document.querySelector('table.w-full.table-fixed tbody tr')) {
                 clearInterval(checkReady);
                 createUI();
