@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         M-Team 封面增強PRO (網格佈局、點擊放大、高級自定義)
 // @namespace    https://github.com/Sam5440/mteam_next_beautification
-// @version      1.4
-// @description  徹底革新M-Team種子列表為高度自定義卡片網格佈局。功能涵蓋點擊放大、按鈕同步、字體/顏色調節、大種子高亮、靈活佈局與多語言支持。最新版新增「Free」種子綠色高亮、下載新分頁、刷新延遲自定義等，所有設置均可持久化保存。
+// @version      1.5
+// @description  徹底革新M-Team種子列表為高度自定義卡片網格佈局。功能涵蓋點擊放大、按鈕同步、字體/顏色調節、大種子高亮、靈活佈局與多語言支持。最新版新增「Free」種子綠色高亮、下載新分頁、刷新延遲自定義、下載進度顯示等，所有設置均可持久化保存。
 // @author       ChatGPT & Sam5440
-// @match        https://next.m-team.cc/*   
+// @match        https://next.m-team.cc/*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -19,7 +19,7 @@
     'use strict';
 
     // --- 版本控制 ---
-    const SCRIPT_VERSION = '1.4'; // 更新版本號
+    const SCRIPT_VERSION = '1.5'; // 更新版本號
     let latestVersion = '檢查中...';
 
     // --- 配置和存儲鍵 ---
@@ -135,6 +135,7 @@
             'updateAvailable': '發現新版本!',
             'resetAllSettings': '重置全部設置',
             'resetConfirmation': '您確定要重置所有腳本設置嗎？此操作將恢復所有默認值並刷新頁面。',
+            'downloadProgress': '下載進度' // New translation
         },
         'zh-CN': {
             'scriptSettings': '脚本设置',
@@ -178,6 +179,7 @@
             'updateAvailable': '发现新版本!',
             'resetAllSettings': '重置全部设置',
             'resetConfirmation': '您确定要重置所有脚本设置吗？此操作将恢复所有默认值并刷新页面。',
+            'downloadProgress': '下载进度' // New translation
         },
         'en': {
             'scriptSettings': 'Script Settings',
@@ -221,6 +223,7 @@
             'updateAvailable': 'Update Available!',
             'resetAllSettings': 'Reset All Settings',
             'resetConfirmation': 'Are you sure you want to reset all script settings? This will restore all defaults and reload the page.',
+            'downloadProgress': 'Download Progress' // New translation
         }
     };
 
@@ -355,6 +358,8 @@
         const actionsCell = row.cells[6];
         const originalStarButton = actionsCell?.querySelector('button:has([aria-label="star"])');
         const originalDownloadButton = actionsCell?.querySelector('button:has(svg path[d*="M8 11.575C7.86667 11.575 7.74167 11.554 7.625 11.512C7.50833 11.4707 7.4 11.4 7.3 11.3L3.7 7.7C3.51667 7.51667 3.425 7.28333 3.425 7C3.425 6.71667 3.51667 6.48333 3.7 6.3C3.88333 6.11667 4.12067 6.02067 4.412 6.012C4.704 6.004 4.94167 6.09167 5.125 6.275L7 8.15V1C7 0.716667 7.096 0.479 7.288 0.287C7.47933 0.0956668 7.71667 0 8 0C8.28333 0 8.521 0.0956668 8.713 0.287C8.90433 0.479 9 0.716667 9 1V8.15L10.875 6.275C11.0583 6.09167 11.296 6.004 11.588 6.012C11.8793 6.02067 12.1167 6.11667 12.3 6.3C12.4833 6.48333 12.575 6.71667 12.575 7C12.575 7.28333 12.4833 7.51667 12.3 7.7L8.7 11.3C8.6 11.4 8.49167 11.4707 8.375 11.512C8.25833 11.554 8.13333 11.575 8 11.575ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196 15.021 0 14.55 0 14V12C0 11.7167 0.0956668 11.479 0.287 11.287C0.479 11.0957 0.716667 11 1 11C1.28333 11 1.521 11.0957 1.713 11.287C1.90433 11.479 2 11.7167 2 12V14H14V12C14 11.7167 14.096 11.479 14.288 11.287C14.4793 11.0957 14.7167 11 15 11C15.2833 11 15.5207 11.0957 15.712 11.287C15.904 11.479 16 11.7167 16 12V14C16 14.55 15.8043 15.021 15.413 15.413C15.021 15.8043 14.55 16 14 16H2Z"])');
+        // New: Get the progress bar element from the first cell
+        const progressEl = row.cells[0]?.querySelector('.ant-progress');
 
         // --- 新增：檢測Free標籤 ---
         let isFreeTorrent = false;
@@ -480,6 +485,57 @@
              contentWrapper.appendChild(clonedCategoryTag);
         }
         contentWrapper.appendChild(subtitleElProcessed);
+
+        // --- NEW: Add progress bar ---
+        if (progressEl) {
+            const clonedProgressEl = progressEl.cloneNode(true);
+
+            // Remove the default Ant Design text/icon as we'll customize it.
+            const antProgressText = clonedProgressEl.querySelector('.ant-progress-text');
+            if (antProgressText) {
+                antProgressText.remove();
+            }
+
+            const percent = progressEl.getAttribute('aria-valuenow');
+            if (percent) {
+                const customProgressBarWrapper = document.createElement('div');
+                customProgressBarWrapper.style.cssText = `
+                    display: flex;
+                    flex-direction: column; /* Text above bar */
+                    gap: 4px; /* Space between text and bar */
+                    margin-top: 10px; /* Space from subtitle */
+                    width: 100%;
+                    box-sizing: border-box; /* Include padding in width */
+                `;
+
+                const customProgressLabel = document.createElement('div');
+                customProgressLabel.textContent = `${t('downloadProgress')}: ${percent}%`;
+                customProgressLabel.style.cssText = `
+                    font-size: 12px;
+                    color: #666;
+                    text-align: left;
+                    padding-left: 2px;
+                `;
+                customProgressBarWrapper.appendChild(customProgressLabel);
+
+                // Re-style the actual progress bar to fit card
+                clonedProgressEl.style.cssText = `
+                    position: relative;
+                    width: 100%;
+                    height: 5px; /* Keep the original height or make it consistent */
+                    margin-bottom: 0; /* Remove default margin */
+                `;
+                const innerProgress = clonedProgressEl.querySelector('.ant-progress-inner');
+                if(innerProgress) innerProgress.style.height = '5px';
+                const progressBg = clonedProgressEl.querySelector('.ant-progress-bg');
+                if(progressBg) progressBg.style.height = '5px';
+
+                customProgressBarWrapper.appendChild(clonedProgressEl);
+                contentWrapper.appendChild(customProgressBarWrapper);
+            }
+        }
+        // --- END NEW: Add progress bar ---
+
         mainClickableArea.appendChild(contentWrapper);
 
         const footer = document.createElement('div');
@@ -740,7 +796,7 @@
 
         const tagPosSelect = document.createElement('select'); tagPosSelect.style.cssText = commonInputStyle;
         [{v: 'cover', t: t('tagPosCover')}, {v: 'title', t: t('tagPosTitle')}].forEach(o => tagPosSelect.add(new Option(o.t, o.v))); tagPosSelect.value = settings.tagPosition;
-        tagPosSelect.addEventListener('change', e => { settings.tagPosition = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.tagPosition, settings.tagPosition); applyUserPreferences(); });
+        tagPosSelect.addEventListener('change', e => { settings.tagPosition = e.target.value; GM_setValue(STORAGE_PREFIX + KEYS.tagPosition, e.target.value); applyUserPreferences(); });
         settingsPanel.appendChild(createSettingRow(t('tagPosition'), tagPosSelect));
 
         settingsPanel.appendChild(createSettingRow(t('sizeFont'), ...createNumberInput('sizeFontSize', 10, 24, 1, 'px'), createColorInput('sizeFontColor')));
@@ -887,7 +943,7 @@
         if (!table) return;
         const observerCallback = () => {
             // Give some time for Ant Design to render the table fully
-            setTimeout(applyUserPreferences, 150);
+            setTimeout(applyUserPreferences, settings.refreshDelay); // 使用 settings.refreshDelay
         };
         const observer = new MutationObserver(observerCallback);
         // Observe changes to the tbody (where rows are added/removed)
@@ -900,7 +956,7 @@
             const advancedObserver = new MutationObserver((mutations) => {
                 mutations.forEach(mutation => {
                     if (mutation.attributeName === 'class') {
-                        setTimeout(applyUserPreferences, 150);
+                        setTimeout(applyUserPreferences, settings.refreshDelay); // 使用 settings.refreshDelay
                     }
                 });
             });
