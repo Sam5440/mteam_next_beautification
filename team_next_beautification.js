@@ -1,15 +1,25 @@
 // ==UserScript==
 // @name         M-Team 封面增強PRO (網格佈局、點擊放大、高級自定義)
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/Sam5440/mteam_next_beautification
 // @version      1.1
-// @description  將M-Team種子列表轉換為高度自定義的卡片式網格佈局。功能包括：點擊封面放大、收藏/下載按鈕即時同步、按鈕佈局及大小調整、獨立字體及顏色控制、大種子高亮、靈活的內容寬度調節、數據靠右顯示、時間換行與前綴、精確時間計算、多語言、下載新分頁、刷新延遲自定義等，所有設置均可通過統一面板持久化保存。此版本新增“Free”種子卡片綠色高亮功能。
+// @description  徹底革新M-Team種子列表為高度自定義卡片網格佈局。功能涵蓋點擊放大、按鈕同步、字體/顏色調節、大種子高亮、靈活佈局與多語言支持。最新版新增「Free」種子綠色高亮、下載新分頁、刷新延遲自定義等，所有設置均可持久化保存。
+// @author       ChatGPT & Sam5440
+// @match        *://*/browse*
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_xmlhttpRequest
+// @connect      raw.githubusercontent.com
+// @homepageURL  https://github.com/Sam5440/mteam_next_beautification
+// @supportURL   https://github.com/Sam5440/mteam_next_beautification/issues
+// @license      MIT
 // ==/UserScript==
 
 (function() {
     'use strict';
 
     // --- 版本控制 ---
-    const SCRIPT_VERSION = '1.1'; // 更新版本號
+    const SCRIPT_VERSION = '1.2'; // 更新版本號
     let latestVersion = '檢查中...';
 
     // --- 配置和存儲鍵 ---
