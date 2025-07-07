@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         M-Team 封面增強PRO (網格佈局、點擊放大、高級自定義)
 // @namespace    https://github.com/Sam5440/mteam_next_beautification
-// @version      1.3
+// @version      1.4
 // @description  徹底革新M-Team種子列表為高度自定義卡片網格佈局。功能涵蓋點擊放大、按鈕同步、字體/顏色調節、大種子高亮、靈活佈局與多語言支持。最新版新增「Free」種子綠色高亮、下載新分頁、刷新延遲自定義等，所有設置均可持久化保存。
 // @author       ChatGPT & Sam5440
-// @match        *://*/browse*
+// @match        https://next.m-team.cc/*   
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -19,7 +19,7 @@
     'use strict';
 
     // --- 版本控制 ---
-    const SCRIPT_VERSION = '1.3'; // 更新版本號
+    const SCRIPT_VERSION = '1.4'; // 更新版本號
     let latestVersion = '檢查中...';
 
     // --- 配置和存儲鍵 ---
